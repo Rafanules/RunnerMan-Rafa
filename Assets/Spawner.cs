@@ -1,43 +1,92 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
-public class MoverObjetoConIncrementoYAleatoriedad : MonoBehaviour
+public class Spawner : MonoBehaviour
 {
     private Vector3 posicionInicial;
-    public float velocidadInicialX = 0.7f; // Velocidad inicial en el eje X.
-    private float velocidadX; // Velocidad actual que se actualizará.
-    public float increaseAmount = 0.2f; // Cantidad en la que aumentará la velocidad.
-    public float increaseInterval = 10f; // Intervalo de tiempo (en segundos) para el aumento de velocidad.
-    private float duracionMovimiento = 4.0f; // Duración del movimiento antes de regresar a la posición inicial.
+    public float velocidadInicialX = 0.7f;
+    private float velocidadX;
+    public float increaseAmount = 0.2f;
+    public float increaseInterval = 10f;
+    private float duracionMovimiento = 4.0f;
+    public GameObject[] vidas;
+    private int vidaActual = 0;
+    private bool puedeMoverse = false;
 
     void Start()
     {
-        posicionInicial = transform.position; // Guarda la posición inicial del objeto.
-        velocidadX = velocidadInicialX; // Inicializa la velocidad actual con la velocidad inicial.
+        posicionInicial = transform.position;
+        velocidadX = velocidadInicialX;
         StartCoroutine(MoverConIncrementoYAleatoriedad());
+    }
+
+    void Update()
+    {
+        if (transform.position.x <= -12)
+        {
+            RestablecerPosicionYVelocidad();
+        }
     }
 
     IEnumerator MoverConIncrementoYAleatoriedad()
     {
-        while (true) // Loop infinito para repetir el comportamiento.
+        while (true)
         {
-            // Espera un tiempo aleatorio antes de mover el objeto.
-            yield return new WaitForSeconds(Random.Range(1f, 3f)); // Espera entre 1 y 3 segundos antes de iniciar el movimiento.
-
-            // Mueve el objeto restando en el eje X durante 'duracionMovimiento'.
+            
+            puedeMoverse = false;
+            
+            yield return new WaitForSeconds(Random.Range(1f, 3f));
+            
+            puedeMoverse = true;
             float tiempoInicioMovimiento = Time.time;
-            while (Time.time - tiempoInicioMovimiento < duracionMovimiento)
+
+            // Mueve el objeto hacia la izquierda
+            while (puedeMoverse && Time.time - tiempoInicioMovimiento < duracionMovimiento)
             {
-                transform.position -= new Vector3(velocidadX * Time.deltaTime, 0, 0); // Resta en X para mover hacia la izquierda.
+                transform.position -= new Vector3(velocidadX * Time.deltaTime, 0, 0);
                 yield return null;
             }
 
-            // Restablece la posición inicial del objeto después de moverlo.
-            transform.position = posicionInicial;
+            if (puedeMoverse)
+            {
+                
+                RestablecerPosicionYVelocidad();
+            }
 
-            // Espera un intervalo antes de incrementar la velocidad, ajustando el tiempo de espera para que el ciclo total dure 'increaseInterval'.
+            
             yield return new WaitForSeconds(increaseInterval - (Time.time - tiempoInicioMovimiento));
-            velocidadX += increaseAmount; // Incrementa la velocidad del objeto.
+            velocidadX += increaseAmount;
+        }
+    }
+
+    void RestablecerPosicionYVelocidad()
+    {
+        transform.position = posicionInicial;
+        velocidadX = velocidadInicialX;
+        StopCoroutine(MoverConIncrementoYAleatoriedad());
+        StartCoroutine(MoverConIncrementoYAleatoriedad());
+    }
+
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+    Debug.Log($"Colisión detectada con: {collision.gameObject.tag} en el tiempo {Time.time}");
+    	if (collision.gameObject.CompareTag("Disparo"))
+        {
+            RestablecerPosicionYVelocidad();
+        }
+
+            if (collision.gameObject.CompareTag("Player"))
+             {
+                if (vidaActual == 2)
+                {
+                    SceneManager.LoadScene("LoadScene");
+                }else{
+					Destroy(vidas[vidaActual]);
+                	vidaActual++;
+				}
+            
+            RestablecerPosicionYVelocidad();
         }
     }
 }

@@ -17,7 +17,6 @@ public class PlayerMovement : MonoBehaviour
         }
         else if (Input.GetKeyDown(KeyCode.S) && !isMoving)
         {
-            // Asegura que el movimiento hacia abajo no exceda un límite inferior, ajusta según sea necesario
             targetYPosition = Mathf.Max(transform.position.y - 2, -4.20f);
             isMoving = true;
         }
